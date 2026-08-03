@@ -1,49 +1,173 @@
-<!doctype html>
-<html lang="id" class="light">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>PixelSave - Financial Manager 8-Bit</title>
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PixelSave - Financial Manager 8-Bit</title>
+  
+  <!-- PWA Manifest Link -->
+  <link rel="manifest" href="manifest.json" />
 
-    <!-- PWA Primary Meta Tags -->
-    <meta name="title" content="PixelSave" />
-    <meta name="description" content="Aplikasi catat keuangan bertema Retro 8-Bit / 90s OS dengan kalkulasi saldo otomatis dan pelacak progres tabungan." />
-    <meta name="theme-color" content="#005ac2" />
-    <meta name="mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="PixelSave" />
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
 
-    <!-- Favicon & Apple Touch Icon (HTTPS PNG) -->
-    <link rel="icon" type="image/png" sizes="192x192" href="https://cdn-icons-png.flaticon.com/512/1006/1006583.png" />
-    <link rel="apple-touch-icon" sizes="512x512" href="https://cdn-icons-png.flaticon.com/512/1006/1006583.png" />
+  <!-- Google Fonts & Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet" />
 
-    <!-- Web App Manifest Link -->
-    <link rel="manifest" href="manifest.json" />
+  <!-- React 18 & Babel Standalone -->
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
-    <!-- Google Fonts & Icons -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Press+Start+2P&family=Space+Grotesk:wght@400;600;700&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
-  </head>
-  <body class="font-body-md text-[#1b1b1c] min-h-screen selection:bg-[#fe8b6d] selection:text-[#1b1b1c]">
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
+  <style>
+    body {
+      font-family: 'VT323', monospace;
+      background-color: #2d3132;
+      color: #1b1b1b;
+      touch-action: manipulation;
+    }
+    .pixel-font {
+      font-family: 'Press Start 2P', cursive;
+    }
+    .pixel-border {
+      border: 4px solid #1b1b1b;
+      box-shadow: 4px 4px 0px #1b1b1b;
+    }
+  </style>
+</head>
+<body class="bg-[#2d3132] min-h-screen flex items-center justify-center p-2">
 
-    <!-- Service Worker Registration -->
-    <script>
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js')
-            .then((reg) => {
-              console.log('[PixelSave PWA] Service Worker registered:', reg.scope);
-            })
-            .catch((err) => {
-              console.log('[PixelSave PWA] Service Worker registration failed:', err);
-            });
-        });
-      }
-    </script>
-  </body>
+  <div id="root" class="w-full max-w-md"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    function App() {
+      const [transactions, setTransactions] = useState(() => {
+        const saved = localStorage.getItem('pixelsave_tx');
+        return saved ? JSON.parse(saved) : [
+          { id: 1, title: 'Gaji Utama', amount: 3500000, type: 'income' },
+          { id: 2, title: 'Makan & Kopi', amount: 45000, type: 'expense' }
+        ];
+      });
+
+      const [title, setTitle] = useState('');
+      const [amount, setAmount] = useState('');
+      const [type, setType] = useState('expense');
+
+      useEffect(() => {
+        localStorage.setItem('pixelsave_tx', JSON.stringify(transactions));
+      }, [transactions]);
+
+      const totalIncome = transactions.filter(t => t.type === 'income').reduce((acc, t) => acc + t.amount, 0);
+      const totalExpense = transactions.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0);
+      const balance = totalIncome - totalExpense;
+
+      const addTransaction = (e) => {
+        e.preventDefault();
+        if (!title || !amount) return;
+        const newTx = {
+          id: Date.now(),
+          title,
+          amount: parseInt(amount),
+          type
+        };
+        setTransactions([newTx, ...transactions]);
+        setTitle('');
+        setAmount('');
+      };
+
+      const deleteTx = (id) => {
+        setTransactions(transactions.filter(t => t.id !== id));
+      };
+
+      const formatRp = (num) => {
+        return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(num);
+      };
+
+      return (
+        <div className="bg-[#f0f3f2] p-4 pixel-border rounded-none">
+          {/* Header */}
+          <div className="text-center mb-4 border-b-4 border-[#1b1b1b] pb-2">
+            <h1 className="pixel-font text-xl text-[#005ac2]">PixelSave</h1>
+            <p className="text-lg text-gray-600">Catat Keuangan 8-Bit</p>
+          </div>
+
+          {/* Balance Card */}
+          <div className="bg-[#fdf8ec] p-3 pixel-border mb-4 text-center">
+            <p className="text-md font-bold uppercase">Sisa Saldo</p>
+            <p className={`pixel-font text-lg ${balance < 0 ? 'text-red-600' : 'text-green-700'}`}>
+              {formatRp(balance)}
+            </p>
+            <div className="flex justify-between text-sm mt-2 pt-2 border-t-2 border-dashed border-gray-400">
+              <span className="text-green-600">Masuk: {formatRp(totalIncome)}</span>
+              <span className="text-red-600">Keluar: {formatRp(totalExpense)}</span>
+            </div>
+          </div>
+
+          {/* Form Input */}
+          <form onSubmit={addTransaction} className="bg-white p-3 pixel-border mb-4 space-y-2">
+            <div>
+              <label className="block text-sm font-bold">Keterangan</label>
+              <input 
+                type="text" 
+                value={title} 
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="Contoh: Beli Kopi" 
+                className="w-full p-1 border-2 border-black text-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-bold">Nominal (Rp)</label>
+              <input 
+                type="number" 
+                value={amount} 
+                onChange={(e) => setAmount(e.target.value)}
+                placeholder="15000" 
+                className="w-full p-1 border-2 border-black text-sm"
+              />
+            </div>
+            <div className="flex gap-2">
+              <select 
+                value={type} 
+                onChange={(e) => setType(e.target.value)}
+                className="p-1 border-2 border-black text-sm font-bold bg-gray-100"
+              >
+                <option value="expense">Pengeluaran</option>
+                <option value="income">Pemasukan</option>
+              </select>
+              <button type="submit" className="flex-1 bg-[#005ac2] text-white pixel-font text-xs p-2 pixel-border active:translate-y-1">
+                + TAMBAH
+              </button>
+            </div>
+          </form>
+
+          {/* Transaction List */}
+          <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+            <h2 className="pixel-font text-xs mb-1">Riwayat:</h2>
+            {transactions.length === 0 && <p className="text-center text-gray-500">Belum ada catatan.</p>}
+            {transactions.map((t) => (
+              <div key={t.id} className="flex justify-between items-center bg-white p-2 border-2 border-black text-sm">
+                <div>
+                  <p className="font-bold leading-none">{t.title}</p>
+                  <p className={`text-xs ${t.type === 'income' ? 'text-green-600' : 'text-red-600'}`}>
+                    {t.type === 'income' ? '+' : '-'} {formatRp(t.amount)}
+                  </p>
+                </div>
+                <button onClick={() => deleteTx(t.id)} className="text-red-600 font-bold px-2 py-0 border border-red-600 text-xs hover:bg-red-100">
+                  X
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
 </html>
