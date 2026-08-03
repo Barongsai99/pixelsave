@@ -14,12 +14,12 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="PixelSave" />
 
-    <!-- Favicon & Touch Icon (Data URI) -->
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='64' fill='%23005ac2'/><rect x='128' y='128' width='256' height='256' fill='%23ffffff'/><rect x='160' y='160' width='192' height='192' fill='%23fe8b6d'/><rect x='200' y='200' width='112' height='112' fill='%23005ac2'/></svg>" />
-    <link rel="apple-touch-icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='64' fill='%23005ac2'/><rect x='128' y='128' width='256' height='256' fill='%23ffffff'/><rect x='160' y='160' width='192' height='192' fill='%23fe8b6d'/><rect x='200' y='200' width='112' height='112' fill='%23005ac2'/></svg>" />
+    <!-- Favicon & Apple Touch Icon (HTTPS PNG) -->
+    <link rel="icon" type="image/png" sizes="192x192" href="https://cdn-icons-png.flaticon.com/512/1006/1006583.png" />
+    <link rel="apple-touch-icon" sizes="512x512" href="https://cdn-icons-png.flaticon.com/512/1006/1006583.png" />
 
-    <!-- Embedded Web App Manifest (Data URL) + Fallback File -->
-    <link rel="manifest" href="data:application/manifest+json;utf8,%7B%22name%22%3A%22PixelSave%22%2C%22short_name%22%3A%22PixelSave%22%2C%22description%22%3A%22Aplikasi%20Catat%20Keuangan%20%26%20Tabungan%20Retro%208-Bit%22%2C%22start_url%22%3A%22%2F%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23005ac2%22%2C%22theme_color%22%3A%22%23005ac2%22%2C%22orientation%22%3A%22portrait-primary%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%3Butf8%2C%253Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%20512%20512%27%253E%253Crect%20width%3D%27512%27%20height%3D%27512%27%20rx%3D%2764%27%20fill%3D%27%2523005ac2%27%2F%253E%253Crect%20x%3D%27128%27%20y%3D%27128%27%20width%3D%27256%27%20height%3D%27256%27%20fill%3D%27%2523ffffff%27%2F%253E%253Crect%20x%3D%27160%27%20y%3D%27160%27%20width%3D%27192%27%20height%3D%27192%27%20fill%3D%27%2523fe8b6d%27%2F%253E%253Crect%20x%3D%27200%27%20y%3D%27200%27%20width%3D%27112%27%20height%3D%27112%27%20fill%3D%27%2523005ac2%27%2F%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22192x192%20512x512%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%2C%22purpose%22%3A%22any%20maskable%22%7D%5D%7D" />
+    <!-- Web App Manifest Link -->
+    <link rel="manifest" href="/manifest.json" />
 
     <!-- Google Fonts & Icons -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -31,39 +31,16 @@
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
 
-    <!-- Embedded Service Worker Registration -->
+    <!-- Service Worker Registration -->
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          // Attempt registering root sw.js file first, fallback to blob worker
           navigator.serviceWorker.register('/sw.js')
             .then((reg) => {
-              console.log('[PixelSave PWA] Service Worker registered via sw.js:', reg.scope);
+              console.log('[PixelSave PWA] Service Worker registered:', reg.scope);
             })
-            .catch(() => {
-              // Embedded inline Blob Service Worker fallback
-              const swCode = `
-                const CACHE_NAME = 'pixelsave-v1';
-                self.addEventListener('install', (e) => {
-                  e.waitUntil(self.skipWaiting());
-                });
-                self.addEventListener('activate', (e) => {
-                  e.waitUntil(self.clients.claim());
-                });
-                self.addEventListener('fetch', (e) => {
-                  if (e.request.method !== 'GET') return;
-                  e.respondWith(
-                    fetch(event.request).catch(() => caches.match(e.request))
-                  );
-                });
-              `;
-              try {
-                const blob = new Blob([swCode], { type: 'application/javascript' });
-                const blobUrl = URL.createObjectURL(blob);
-                navigator.serviceWorker.register(blobUrl, { scope: '/' })
-                  .then((reg) => console.log('[PixelSave PWA] Inline Blob SW registered:', reg.scope))
-                  .catch((err) => console.log('[PixelSave PWA] SW registration notice:', err));
-              } catch(e) {}
+            .catch((err) => {
+              console.log('[PixelSave PWA] Service Worker registration failed:', err);
             });
         });
       }
