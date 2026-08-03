@@ -1,0 +1,17 @@
+{
+  "name": "PixelSave",
+  "short_name": "PixelSave",
+  "description": "Aplikasi Catat Keuangan Retro",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#FDF8EC",
+  "theme_color": "#0f172a",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/1006/1006583.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
